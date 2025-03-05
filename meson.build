@@ -26,7 +26,7 @@ src = [
   'src/renderer/vk_renderer.cpp'
 ]
 
-exe = executable('VkEngine',
+exe = executable('engine',
   sources : src,
   include_directories : inc,
   dependencies : deps,

@@ -4,6 +4,7 @@
 #include "GLFW/glfw3.h"
 #include "common.h"
 #include "window.h"
+#include "renderer/vk_renderer.h"
 
 #include <vector>
 #include <optional>
