@@ -22,7 +22,8 @@ deps = [
 src = [
   'src/main.cpp',
   'src/engine.cpp',
-  'src/window.cpp'
+  'src/window.cpp',
+  'src/renderer/vk_renderer.cpp'
 ]
 
 exe = executable('VkEngine',
@@ -32,8 +33,8 @@ exe = executable('VkEngine',
   install : true
 )
 
-dll_files = ['fmt.dll', 'assimp-vc143-mt.dll']
-foreach dll : dll_files
+dlls = ['fmt.dll', 'assimp-vc143-mt.dll']
+foreach dll : dlls
   configure_file(
     input : join_paths(libdir, 'native', dll),
     output : dll,

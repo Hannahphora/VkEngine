@@ -2,17 +2,14 @@
 
 #define GLFW_INCLUDE_VULKAN
 #include "GLFW/glfw3.h"
+#include "common.h"
+#include "window.h"
 
-#include "fmt/core.h"
-
-#include <cstdlib>
 #include <vector>
 #include <optional>
 #include <set>
 #include <limits>
 #include <algorithm>
-
-#include "window.h"
 
 const std::vector<const char*> validationLayers = {
 	"VK_LAYER_KHRONOS_validation"
