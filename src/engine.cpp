@@ -23,8 +23,10 @@ void Engine::initVulkan() {
 }
 
 void Engine::cleanup() {
-    for (auto imageView : swapChainImageViews)
+    
+    for (auto imageView : swapChainImageViews) {
         vkDestroyImageView(device, imageView, nullptr);
+    }
 
     vkDestroySwapchainKHR(device, swapChain, nullptr);
     vkDestroyDevice(device, nullptr);
@@ -36,7 +38,7 @@ void Engine::cleanup() {
 
 void Engine::createInstance() {
     if (enableValidationLayers && !checkValidationLayerSupport()) {
-        fmt::print("error: {}\n", "no validation layers available");
+        fmt::print("error: no validation layers available\n");
         exit(EXIT_FAILURE);
     }
 
@@ -66,14 +68,14 @@ void Engine::createInstance() {
     else createInfo.enabledLayerCount = 0;
 
     if (vkCreateInstance(&createInfo, nullptr, &instance) != VK_SUCCESS) {
-        fmt::print("error: {}\n", "failed to create vulkan instance");
+        fmt::print("error: failed to create vulkan instance\n");
         exit(EXIT_FAILURE);
     }
 }
 
 void Engine::createSurface() {
     if (glfwCreateWindowSurface(instance, window, nullptr, &surface) != VK_SUCCESS) {
-        fmt::print("error: {}\n", "failed to create window surface");
+        fmt::print("error: failed to create window surface\n");
         exit(EXIT_FAILURE);
     }
 }
@@ -84,7 +86,7 @@ void Engine::selectPhysicalDevice() {
     uint32_t deviceCount;
     vkEnumeratePhysicalDevices(instance, &deviceCount, nullptr);
     if (!deviceCount) {
-        fmt::print("error: {}\n", "no devices found");
+        fmt::print("error: no devices found\n");
         exit(EXIT_FAILURE);
     }
 
@@ -98,7 +100,7 @@ void Engine::selectPhysicalDevice() {
         }
     }
     if (!physicalDevice) {
-        fmt::print("error: {}\n", "no suitable devices found");
+        fmt::print("error: no suitable devices found\n");
         exit(EXIT_FAILURE);
     }
 }
@@ -187,7 +189,7 @@ void Engine::createLogicalDevice() {
     else createInfo.enabledLayerCount = 0;
 
     if (vkCreateDevice(physicalDevice, &createInfo, nullptr, &device) != VK_SUCCESS) {
-        fmt::print("error: {}\n", "failed to create logical device");
+        fmt::print("error: failed to create logical device\n");
         exit(EXIT_FAILURE);
     }
 
@@ -236,7 +238,7 @@ void Engine::createSwapChain() {
     createInfo.oldSwapchain = VK_NULL_HANDLE;
 
     if (vkCreateSwapchainKHR(device, &createInfo, nullptr, &swapChain) != VK_SUCCESS) {
-        fmt::print("error: {}\n", "failed to create swap chain");
+        fmt::print("error: failed to create swap chain\n");
         exit(EXIT_FAILURE);
     }
 
@@ -329,7 +331,7 @@ void Engine::createImageViews() {
         createInfo.subresourceRange.layerCount = 1;
 
         if (vkCreateImageView(device, &createInfo, nullptr, &swapChainImageViews[i]) != VK_SUCCESS) {
-            fmt::print("error: {}\n", "failed to create image views");
+            fmt::print("error: failed to create image views\n");
             exit(EXIT_FAILURE);
         }
     }
@@ -357,7 +359,7 @@ void Engine::setupDebugMessenger() {
     VkDebugUtilsMessengerCreateInfoEXT createInfo;
     populateDebugMessengerCreateInfo(createInfo);
     if (CreateDebugUtilsMessengerEXT(instance, &createInfo, nullptr, &debugMessenger) != VK_SUCCESS) {
-        fmt::print("error: {}\n", "failed to set up debug messenger");
+        fmt::print("error: failed to set up debug messenger\n");
         exit(EXIT_FAILURE);
     }
 }
