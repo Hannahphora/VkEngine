@@ -1,5 +1,17 @@
 #pragma once
 
+#define GLFW_INCLUDE_VULKAN
+#include <GLFW/glfw3.h>
+
+#include <vulkan/vulkan.h>
+#include <vulkan/vk_enum_string_helper.h>
+#include <vma/vk_mem_alloc.h>
+
+#include <fmt/core.h>
+
+#include <glm/mat4x4.hpp>
+#include <glm/vec4.hpp>
+
 #include <memory>
 #include <optional>
 #include <string>
@@ -12,14 +24,11 @@
 #include <limits>
 #include <algorithm>
 
-#include <vulkan/vulkan.h>
-#include <vulkan/vk_enum_string_helper.h>
-#include <vma/vk_mem_alloc.h>
-
-#include <fmt/core.h>
-
-#include <glm/mat4x4.hpp>
-#include <glm/vec4.hpp>
+#ifdef DEBUG
+const bool useValidationLayers = true;
+#else
+const bool useValidationLayers = false;
+#endif
 
 #define VK_CHECK(x)\
     do {\

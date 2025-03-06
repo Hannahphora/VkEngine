@@ -22,7 +22,7 @@ void Renderer::cleanup() {
         destroySwapchain();
         vkDestroySurfaceKHR(instance, surface, nullptr);
         vkDestroyDevice(device, nullptr);
-        if (enableValidationLayers) DestroyDebugUtilsMessengerEXT(instance, debugMessenger, nullptr);
+        if (useValidationLayers) DestroyDebugUtilsMessengerEXT(instance, debugMessenger, nullptr);
         vkDestroyInstance(instance, nullptr);
     }
 }
@@ -36,17 +36,15 @@ void Renderer::draw() {
 //
 
 void Renderer::createInstance() {
-    if (enableValidationLayers && !checkValidationLayerSupport()) {
+    if (useValidationLayers && !checkValidationLayerSupport()) {
         fmt::print("error: no validation layers available\n");
         abort();
     }
 
     VkApplicationInfo appInfo = {};
     appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
-    appInfo.pApplicationName = "VulkanEngine";
+    appInfo.pApplicationName = "VkEngine";
     appInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
-    appInfo.pEngineName = "No Engine";
-    appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
     appInfo.apiVersion = VK_API_VERSION_1_3;
 
     VkInstanceCreateInfo createInfo = {};
@@ -58,9 +56,10 @@ void Renderer::createInstance() {
     createInfo.ppEnabledExtensionNames = extensions.data();
 
     VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo = {};
-    if (enableValidationLayers) {
-        createInfo.enabledLayerCount = static_cast<uint32_t>(validationLayers.size());
-        createInfo.ppEnabledLayerNames = validationLayers.data();
+    if (useValidationLayers) {
+        const char* vLayers[] = { "VK_LAYER_KHRONOS_validation" };
+        createInfo.enabledLayerCount = 1;
+        createInfo.ppEnabledLayerNames = (const char* const*)vLayers;
         populateDebugMessengerCreateInfo(debugCreateInfo);
         createInfo.pNext = (VkDebugUtilsMessengerCreateInfoEXT*)&debugCreateInfo;
     }
@@ -79,24 +78,17 @@ bool Renderer::checkValidationLayerSupport() {
     std::vector<VkLayerProperties> availableLayers(layerCount);
     vkEnumerateInstanceLayerProperties(&layerCount, availableLayers.data());
 
-    for (const char* layerName : validationLayers) {
-        bool layerFound = false;
-        for (const auto& layerProperties : availableLayers) {
-            if (strcmp(layerName, layerProperties.layerName) == 0) {
-                layerFound = true;
-                break;
-            }
-        }
-        if (!layerFound) return false;
+    for (const auto& layerProperties : availableLayers) {
+        if (strcmp("VK_LAYER_KHRONOS_validation", layerProperties.layerName) == 0) return true;
     }
-    return true;
+    return false;
 }
 
 std::vector<const char*> Renderer::getRequiredExtensions() {
     uint32_t glfwExtCount;
     const char** glfwExts = glfwGetRequiredInstanceExtensions(&glfwExtCount);
     std::vector<const char*> exts(glfwExts, glfwExts + glfwExtCount);
-    if (enableValidationLayers) exts.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+    if (useValidationLayers) exts.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
     return exts;
 }
 
@@ -147,8 +139,7 @@ bool Renderer::checkDeviceExtensionSupport(VkPhysicalDevice device) {
     vkEnumerateDeviceExtensionProperties(device, nullptr, &extCount, availableExts.data());
     std::set<std::string> requiredExts(deviceExtensions.begin(), deviceExtensions.end());
 
-    for (const auto& ext : availableExts)
-        requiredExts.erase(ext.extensionName);
+    for (const auto& ext : availableExts) requiredExts.erase(ext.extensionName);
 
     return requiredExts.empty();
 }
@@ -162,8 +153,7 @@ QueueFamilyIndices Renderer::findQueueFamilies(VkPhysicalDevice device) {
     vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, queueFamilies.data());
 
     for (int i = 0; i < queueFamilies.size(); i++) {
-        if (queueFamilies[i].queueFlags & VK_QUEUE_GRAPHICS_BIT)
-            indices.graphicsFamily = i;
+        if (queueFamilies[i].queueFlags & VK_QUEUE_GRAPHICS_BIT) indices.graphicsFamily = i;
 
         VkBool32 presentSupport;
         vkGetPhysicalDeviceSurfaceSupportKHR(device, i, surface, &presentSupport);
@@ -204,7 +194,7 @@ void Renderer::createLogicalDevice() {
     createInfo.enabledExtensionCount = (uint32_t)deviceExtensions.size();
     createInfo.ppEnabledExtensionNames = deviceExtensions.data();
 
-    if (enableValidationLayers) {
+    if (useValidationLayers) {
         createInfo.enabledLayerCount = (uint32_t)validationLayers.size();
         createInfo.ppEnabledLayerNames = validationLayers.data();
     }
@@ -375,7 +365,7 @@ void Renderer::populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoE
 }
 
 void Renderer::setupDebugMessenger() {
-    if (!enableValidationLayers) return;
+    if (!useValidationLayers) return;
     VkDebugUtilsMessengerCreateInfoEXT createInfo;
     populateDebugMessengerCreateInfo(createInfo);
     VK_CHECK(CreateDebugUtilsMessengerEXT(instance, &createInfo, nullptr, &debugMessenger));

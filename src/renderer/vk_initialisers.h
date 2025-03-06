@@ -1,4 +1,6 @@
 #pragma once
-#include "GLFW/glfw3.h"
-#include "../common.h"
+#include "vk_common.h"
 
+namespace Initialisers {
+    
+}

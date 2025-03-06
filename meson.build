@@ -11,6 +11,8 @@ cpp = meson.get_compiler('cpp')
 
 if get_option('buildtype') == 'debug' or get_option('buildtype') == 'debugoptimized'
   add_project_arguments('-DDEBUG', language : 'cpp')
+else
+  add_project_arguments('-DNDEBUG', language : 'cpp')
 endif
 
 inc = include_directories(
@@ -66,8 +68,8 @@ src = [
   # src
   'src/main.cpp',
   'src/engine.cpp',
-  'src/window.cpp',
   'src/renderer/vk_renderer.cpp',
+  'src/renderer/vk_initialisers.cpp',
   # imgui
   'dep/include/imgui/imgui.cpp',
   'dep/include/imgui/imgui_demo.cpp',
