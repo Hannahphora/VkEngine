@@ -57,9 +57,8 @@ void Renderer::createInstance() {
 
     VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo = {};
     if (useValidationLayers) {
-        const char* vLayers[] = { "VK_LAYER_KHRONOS_validation" };
-        createInfo.enabledLayerCount = 1;
-        createInfo.ppEnabledLayerNames = (const char* const*)vLayers;
+        createInfo.enabledLayerCount = validationLayers.size();
+        createInfo.ppEnabledLayerNames = validationLayers.data();
         populateDebugMessengerCreateInfo(debugCreateInfo);
         createInfo.pNext = (VkDebugUtilsMessengerCreateInfoEXT*)&debugCreateInfo;
     }
@@ -78,10 +77,17 @@ bool Renderer::checkValidationLayerSupport() {
     std::vector<VkLayerProperties> availableLayers(layerCount);
     vkEnumerateInstanceLayerProperties(&layerCount, availableLayers.data());
 
-    for (const auto& layerProperties : availableLayers) {
-        if (strcmp("VK_LAYER_KHRONOS_validation", layerProperties.layerName) == 0) return true;
+    for (const char* layerName : validationLayers) {
+        bool layerFound = false;
+        for (const auto& layerProperties : availableLayers) {
+            if (strcmp(layerName, layerProperties.layerName) == 0) {
+                layerFound = true;
+                break;
+            }
+        }
+        if (!layerFound) return false;
     }
-    return false;
+    return true;
 }
 
 std::vector<const char*> Renderer::getRequiredExtensions() {
@@ -195,9 +201,8 @@ void Renderer::createLogicalDevice() {
     createInfo.ppEnabledExtensionNames = deviceExtensions.data();
 
     if (useValidationLayers) {
-        const char* vLayers[] = { "VK_LAYER_KHRONOS_validation" };
-        createInfo.enabledLayerCount = 1;
-        createInfo.ppEnabledLayerNames = (const char* const*)vLayers;
+        createInfo.enabledLayerCount = validationLayers.size();
+        createInfo.ppEnabledLayerNames = validationLayers.data();
     }
     else createInfo.enabledLayerCount = 0;
 
