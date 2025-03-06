@@ -6,23 +6,8 @@ const std::vector<const char*> validationLayers = {
     "VK_LAYER_KHRONOS_validation"
 };
 
-const std::vector<const char*> deviceExtensions = {
+const std::vector<const char*> requiredDeviceExtensions = {
 	VK_KHR_SWAPCHAIN_EXTENSION_NAME
-};
-
-struct QueueFamilyIndices {
-	std::optional<uint32_t> graphicsFamily;
-	std::optional<uint32_t> presentFamily;
-
-	bool isComplete() {
-		return graphicsFamily.has_value() && presentFamily.has_value();
-	}
-};
-
-struct SwapChainSupportDetails {
-	VkSurfaceCapabilitiesKHR capabilities;
-	std::vector<VkSurfaceFormatKHR> formats;
-	std::vector<VkPresentModeKHR> presentModes;
 };
 
 class Renderer {
@@ -44,8 +29,10 @@ public:
 	VkDevice device;
 	VkSurfaceKHR surface;
 
-    VkQueue graphicsQueue;
-    VkQueue presentQueue;
+    std::vector<Queue> queues = {
+        { VK_QUEUE_GRAPHICS_BIT },
+        { VK_QUEUE_COMPUTE_BIT },
+    };
 
     VkSwapchainKHR swapChain;
     VkFormat swapChainImageFormat;
@@ -64,8 +51,6 @@ private:
 
     void selectPhysicalDevice();
 	bool isDeviceSuitable(VkPhysicalDevice device);
-	bool checkDeviceExtensionSupport(VkPhysicalDevice device);
-	QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device);
 	void createLogicalDevice();
 
 	void createSwapchain();

@@ -26,8 +26,10 @@
 
 #ifdef DEBUG
 const bool useValidationLayers = true;
+const bool debug = true;
 #else
 const bool useValidationLayers = false;
+const bool debug = false;
 #endif
 
 #define VK_CHECK(x)\
@@ -38,3 +40,19 @@ const bool useValidationLayers = false;
             abort();\
         }\
     } while (0)
+
+struct SwapChainSupportDetails {
+	VkSurfaceCapabilitiesKHR capabilities;
+	std::vector<VkSurfaceFormatKHR> formats;
+	std::vector<VkPresentModeKHR> presentModes;
+};
+
+struct Queue {
+    VkQueueFlagBits flag;
+    std::optional<uint32_t> index;
+    VkQueue queue;
+    static bool allQueuesAvailable(const std::vector<Queue>& queues) {
+        for (const auto& queue : queues) if (!queue.index.has_value()) return false;
+        return true;
+    }
+};
