@@ -195,8 +195,9 @@ void Renderer::createLogicalDevice() {
     createInfo.ppEnabledExtensionNames = deviceExtensions.data();
 
     if (useValidationLayers) {
-        createInfo.enabledLayerCount = (uint32_t)validationLayers.size();
-        createInfo.ppEnabledLayerNames = validationLayers.data();
+        const char* vLayers[] = { "VK_LAYER_KHRONOS_validation" };
+        createInfo.enabledLayerCount = 1;
+        createInfo.ppEnabledLayerNames = (const char* const*)vLayers;
     }
     else createInfo.enabledLayerCount = 0;
 
