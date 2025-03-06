@@ -6,9 +6,6 @@ void Renderer::init() {
     setupDebugMessenger();
     createSurface();
     
-    queues.push_back({ VK_QUEUE_GRAPHICS_BIT });
-    queues.push_back({ VK_QUEUE_COMPUTE_BIT });
-
     selectPhysicalDevice();
     createLogicalDevice();
     
@@ -158,27 +155,22 @@ void Renderer::selectPhysicalDevice() {
 }
 
 bool Renderer::isDeviceSuitable(VkPhysicalDevice device) {
-    bool extsSupported = VkInitialisers::checkDeviceExtensionSupport(device, &requiredDeviceExtensions);
+    bool extsSupported = VkInitialisers::checkDeviceExtensionSupport(device, requiredDeviceExtensions);
     bool swapChainAdequate = false;
     if (extsSupported) {
         SwapChainSupportDetails swapChainSupport = querySwapchainSupport(device);
         swapChainAdequate = !swapChainSupport.formats.empty() && !swapChainSupport.presentModes.empty();
     }
 
-    return VkInitialisers::checkQueuesAvailable(device, &queues)
+    return VkInitialisers::checkQueuesAvailable(device, queues)
         && extsSupported
         && swapChainAdequate;
 }
 
 void Renderer::createLogicalDevice() {
-    VkInitialisers::setQueueIndices(physicalDevice, &queues);
+    VkInitialisers::setQueueIndices(physicalDevice, queues);
     std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
-
-    if (!Queue::allQueuesAvailable(queues)) {
-        fmt::print("error: not all queues available\n");
-        abort();
-    }
-
+    
     float queuePriority = 1.0f;
     for (auto& queue : queues) {
         VkDeviceQueueCreateInfo queueCreateInfo{};
@@ -206,7 +198,7 @@ void Renderer::createLogicalDevice() {
     else createInfo.enabledLayerCount = 0;
 
     VK_CHECK(vkCreateDevice(physicalDevice, &createInfo, nullptr, &device));
-    VkInitialisers::setQueues(device, &queues);
+    VkInitialisers::setQueues(device, queues);
 }
 
 //
