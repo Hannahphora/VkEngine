@@ -9,21 +9,93 @@ project('VkEngine', 'cpp',
 
 cpp = meson.get_compiler('cpp')
 
-inc = include_directories('dep/include/')
+if get_option('buildtype') == 'debug' or get_option('buildtype') == 'debugoptimized'
+  add_project_arguments('-DDEBUG', language : 'cpp')
+endif
 
+inc = include_directories(
+  'dep/include/',
+  'dep/include/imgui/',
+  'dep/include/imgui/backends/'
+)
+
+# get deps
 libdir = join_paths(meson.current_source_dir(), 'dep/lib')
 deps = [
   dependency('vulkan', required: true),
-  cpp.find_library('fmt', dirs: libdir, required: true),
-  cpp.find_library('assimp-vc143-mt', dirs: libdir, required: true),
   cpp.find_library('glfw3', dirs: libdir, static: true, required: true)
 ]
 
+dlls = [
+  'fmt',
+  'assimp-vc143-mt'
+]
+
+foreach dll : dlls
+  deps += cpp.find_library(dll, dirs: libdir, required: true)
+endforeach
+
+# shaders
+dxc = find_program('C:/VulkanSDK/1.3.296.0/Bin/dxc.exe', required: true) # TODO: remove hardcoded path
+shaders_src = [
+  { 'name': 'vert', 'src': 'shaders/vert.hlsl', 'profile': 'vs_6_0' },
+  { 'name': 'frag', 'src': 'shaders/frag.hlsl', 'profile': 'ps_6_0' }
+]
+
+shaders = []
+foreach shader : shaders_src
+  header = custom_target(
+    shader['name'] + '_spv',
+    input : shader['src'],
+    output : shader['name'] + '.spv',
+    command : [
+      dxc,
+      '-spirv',
+      '-T', shader['profile'],
+      '-E', 'main',
+      '@INPUT@',
+      '-Fo', '@OUTPUT@',
+      '-fspv-target-env=vulkan1.3',
+    ]
+  )
+  shaders += header
+endforeach
+
+# src/executable
 src = [
+  # src
   'src/main.cpp',
   'src/engine.cpp',
   'src/window.cpp',
-  'src/renderer/vk_renderer.cpp'
+  'src/renderer/vk_renderer.cpp',
+  # imgui
+  'dep/include/imgui/imgui.cpp',
+  'dep/include/imgui/imgui_demo.cpp',
+  'dep/include/imgui/imgui_draw.cpp',
+  'dep/include/imgui/imgui_tables.cpp',
+  'dep/include/imgui/imgui_widgets.cpp',
+  'dep/include/imgui/backends/imgui_impl_glfw.cpp',
+  'dep/include/imgui/backends/imgui_impl_vulkan.cpp',
+  # meshoptimizer
+  'dep/include/meshoptimizer/allocator.cpp',
+  'dep/include/meshoptimizer/clusterizer.cpp',
+  'dep/include/meshoptimizer/indexcodec.cpp',
+  'dep/include/meshoptimizer/indexgenerator.cpp',
+  'dep/include/meshoptimizer/overdrawanalyzer.cpp',
+  'dep/include/meshoptimizer/overdrawoptimizer.cpp',
+  'dep/include/meshoptimizer/partition.cpp',
+  'dep/include/meshoptimizer/quantization.cpp',
+  'dep/include/meshoptimizer/simplifier.cpp',
+  'dep/include/meshoptimizer/spatialorder.cpp',
+  'dep/include/meshoptimizer/stripifier.cpp',
+  'dep/include/meshoptimizer/vcacheanalyzer.cpp',
+  'dep/include/meshoptimizer/vcacheoptimizer.cpp',
+  'dep/include/meshoptimizer/vertexcodec.cpp',
+  'dep/include/meshoptimizer/vertexfilter.cpp',
+  'dep/include/meshoptimizer/vfetchanalyzer.cpp',
+  'dep/include/meshoptimizer/vfetchoptimizer.cpp',
+  #shaders
+  shaders
 ]
 
 exe = executable('engine',
@@ -33,12 +105,13 @@ exe = executable('engine',
   install : true
 )
 
+# copy dlls to output dir
 if host_machine.system() == 'windows'
-  dlls = ['fmt.dll', 'assimp-vc143-mt.dll']
   foreach dll : dlls
+    name = dll + '.dll'
     configure_file(
-      input : join_paths(libdir, 'native', dll),
-      output : dll,
+      input : join_paths(libdir, 'native', name),
+      output : name,
       copy : true
     )
   endforeach

@@ -1,6 +1,6 @@
 #include "engine.h"
 
-int main(int argc, char** argv) {
+int main(int argC, char* argV[]) {
 
     // TODO: parse cmd line args
 
