@@ -11,8 +11,6 @@ cpp = meson.get_compiler('cpp')
 
 if get_option('buildtype') == 'debug' or get_option('buildtype') == 'debugoptimized'
   add_project_arguments('-DDEBUG', language : 'cpp')
-else
-  add_project_arguments('-DNDEBUG', language : 'cpp')
 endif
 
 inc = include_directories(
@@ -37,8 +35,20 @@ foreach dll : dlls
   deps += cpp.find_library(dll, dirs: libdir, required: true)
 endforeach
 
+# get vulkan sdk path
+pymodule = import('python3')
+python3 = pymodule.find_python()
+res = run_command(python3, '-c', 'import os; print(os.environ["VULKAN_SDK"])')
+if res.returncode() == 0
+  vk_sdk = res.stdout().strip()
+else
+  # vk_sdk = 'C:/VulkanSDK/1.3.296.0/'
+  vk_sdk = 'C:/VulkanSDK/1.3.283.0/'
+endif
+
+dxc = find_program(join_paths(vk_sdk, 'Bin/dxc.exe'), required: true)
+
 # shaders
-dxc = find_program('C:/VulkanSDK/1.3.296.0/Bin/dxc.exe', required: true) # TODO: remove hardcoded path
 shaders_src = [
   { 'name': 'vert', 'src': 'shaders/vert.hlsl', 'profile': 'vs_6_0' },
   { 'name': 'frag', 'src': 'shaders/frag.hlsl', 'profile': 'ps_6_0' }
@@ -70,6 +80,7 @@ src = [
   'src/engine.cpp',
   'src/renderer/vk_renderer.cpp',
   'src/renderer/vk_initialisers.cpp',
+  'src/renderer/vk_images.cpp',
   # imgui
   'dep/include/imgui/imgui.cpp',
   'dep/include/imgui/imgui_demo.cpp',
@@ -96,7 +107,8 @@ src = [
   'dep/include/meshoptimizer/vertexfilter.cpp',
   'dep/include/meshoptimizer/vfetchanalyzer.cpp',
   'dep/include/meshoptimizer/vfetchoptimizer.cpp',
-  #shaders
+  # other
+  'dep/include/vkbootstrap/VkBootstrap.cpp',
   shaders
 ]
 

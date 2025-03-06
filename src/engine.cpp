@@ -8,6 +8,9 @@ void Engine::run() {
     renderer.init();
 
     while (!glfwWindowShouldClose(window)) {
+
+		renderer.draw();
+
         glfwPollEvents();
     }
 

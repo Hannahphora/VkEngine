@@ -7,6 +7,8 @@
 #include <vulkan/vk_enum_string_helper.h>
 #include <vma/vk_mem_alloc.h>
 
+#include <vkbootstrap/VkBootstrap.h>
+
 #include <fmt/core.h>
 
 #include <glm/mat4x4.hpp>
@@ -33,28 +35,10 @@ const bool debug = false;
 #endif
 
 #define VK_CHECK(x)\
-    do {\
-        VkResult err = x;\
-        if (err) {\
-            fmt::print("Detected Vulkan error: {}\n", string_VkResult(err));\
-            abort();\
-        }\
-    } while (0)
-
-struct SwapChainSupportDetails {
-	VkSurfaceCapabilitiesKHR capabilities;
-	std::vector<VkSurfaceFormatKHR> formats;
-	std::vector<VkPresentModeKHR> presentModes;
-};
-
-struct Queue {
-    VkQueueFlagBits flag;
-    std::optional<uint32_t> index;
-    VkQueue queue;
-    static bool allQueuesAvailable(const std::vector<Queue>& queues) {
-        for (const auto& queue : queues) {
-            if (!queue.index.has_value()) return false;
-        }
-        return true;
-    }
-};
+do {\
+    VkResult err = x;\
+    if (err) {\
+        fmt::print("Detected Vulkan error: {}\n", string_VkResult(err));\
+        abort();\
+    }\
+} while (0)

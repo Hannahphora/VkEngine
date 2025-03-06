@@ -2,7 +2,7 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "debug engine",
+            "name": "Start Debugging",
             "type": "cppvsdbg",
             "request": "launch",
             "program": "${workspaceFolder}/build/engine.exe",
@@ -11,7 +11,6 @@
             "cwd": "${workspaceFolder}/build",
             "environment": [],
             "console": "internalConsole",
-            "symbolSearchPath": "C:\\Symbols",
             "logging": {
                 "moduleLoad": true,
                 "exceptions": true

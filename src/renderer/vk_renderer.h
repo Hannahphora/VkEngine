@@ -1,14 +1,14 @@
 #pragma once
 #include "vk_common.h"
-#include "vk_initialisers.h"
 
-const std::vector<const char*> validationLayers = {
-    "VK_LAYER_KHRONOS_validation"
+struct FrameData {
+	VkCommandPool cmdPool;
+	VkCommandBuffer mainCmdBuffer;
+	VkSemaphore swapchainSemaphore, renderSemaphore;
+	VkFence renderFence;
 };
 
-const std::vector<const char*> requiredDeviceExtensions = {
-	VK_KHR_SWAPCHAIN_EXTENSION_NAME
-};
+const uint32_t FRAME_OVERLAP = 2;
 
 class Renderer {
 public:
@@ -29,55 +29,27 @@ public:
 	VkDevice device;
 	VkSurfaceKHR surface;
 
-    std::vector<Queue> queues = {
-		{ VK_QUEUE_GRAPHICS_BIT },
-		{ VK_QUEUE_COMPUTE_BIT }
-	};
+	VkQueue graphicsQueue;
+	uint32_t graphicsQueueFamily;
+	VkQueue computeQueue;
+	uint32_t computeQueueFamily;
 
-    VkSwapchainKHR swapChain;
-    VkFormat swapChainImageFormat;
+    VkSwapchainKHR swapchain;
+    VkFormat swapchainImageFormat;
+	std::vector<VkImage> swapchainImages;
+	std::vector<VkImageView> swapchainImageViews;
+	VkExtent2D swapchainExtent;
 
-	std::vector<VkImage> swapChainImages;
-	std::vector<VkImageView> swapChainImageViews;
-	VkExtent2D swapChainExtent;
+	FrameData& getCurrentFrame() { return frames[frameNumber % FRAME_OVERLAP]; };
+	FrameData frames[FRAME_OVERLAP];
 
 private:
 
-    void createInstance();
-	void createSurface();
-
-    bool checkValidationLayerSupport();
-	std::vector<const char*> getRequiredExtensions();
-
-    void selectPhysicalDevice();
-	bool isDeviceSuitable(VkPhysicalDevice device);
-	void createLogicalDevice();
+    void initVulkan();
+	void initCommands();
+	void initSyncStructures();
 
 	void createSwapchain();
 	void destroySwapchain();
-	SwapChainSupportDetails querySwapchainSupport(VkPhysicalDevice device);
-	VkSurfaceFormatKHR chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats);
-	VkPresentModeKHR chooseSwapPresentMode(const std::vector<VkPresentModeKHR>& availablePresentModes);
-	VkExtent2D chooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities);
-
-	void createImageViews();
-
-	void populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& createInfo);
-	void setupDebugMessenger();
-    
-	static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
-		VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
-		VkDebugUtilsMessageTypeFlagsEXT messageType,
-		const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
-		void* pUserData);
-    
-    static VkResult CreateDebugUtilsMessengerEXT(VkInstance instance,
-        const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo,
-        const VkAllocationCallbacks* pAllocator,
-        VkDebugUtilsMessengerEXT* pDebugMessenger);
-
-    static void DestroyDebugUtilsMessengerEXT(VkInstance instance,
-        VkDebugUtilsMessengerEXT debugMessenger,
-        const VkAllocationCallbacks* pAllocator);
 
 };

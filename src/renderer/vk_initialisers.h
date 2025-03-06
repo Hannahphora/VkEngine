@@ -1,12 +1,20 @@
 #pragma once
 #include "vk_common.h"
 
-namespace VkInitialisers {
+namespace vkinit {
+    VkCommandPoolCreateInfo commandPoolInfoCreate(uint32_t queueFamilyIndex, VkCommandPoolCreateFlags flags = 0);
+    VkCommandBufferAllocateInfo commandBufferAllocateInfo(VkCommandPool pool, uint32_t count = 1);
 
-    bool checkDeviceExtensionSupport(VkPhysicalDevice device, const std::vector<const char*>& requiredExtensions);
+    VkCommandBufferBeginInfo commandBufferBeginInfo(VkCommandBufferUsageFlags flags = 0);
+    VkCommandBufferSubmitInfo commandBufferSubmitInfo(VkCommandBuffer cmd);
 
-    void setQueueIndices(VkPhysicalDevice device, std::vector<Queue>& queues);
-    bool checkQueuesAvailable(VkPhysicalDevice device, const std::vector<Queue>& queues);
-    void setQueues(VkDevice device, std::vector<Queue>& queues);
+    VkFenceCreateInfo fenceCreateInfo(VkFenceCreateFlags flags = 0);
 
+    VkSemaphoreCreateInfo semaphoreCreateInfo(VkSemaphoreCreateFlags flags = 0);
+    VkSemaphoreSubmitInfo semaphoreSubmitInfo(VkPipelineStageFlags2 stageMask, VkSemaphore semaphore);
+
+    VkSubmitInfo2 submitInfo(VkCommandBufferSubmitInfo* cmd, VkSemaphoreSubmitInfo* signalSemaphoreInfo, VkSemaphoreSubmitInfo* waitSemaphoreInfo);
+    VkPresentInfoKHR presentInfo();
+
+    VkImageSubresourceRange imageSubresourceRange(VkImageAspectFlags aspectMask);
 }
