@@ -29,10 +29,7 @@ public:
 	VkDevice device;
 	VkSurfaceKHR surface;
 
-    std::vector<Queue> queues = {
-        { VK_QUEUE_GRAPHICS_BIT },
-        { VK_QUEUE_COMPUTE_BIT },
-    };
+    std::vector<Queue> queues;
 
     VkSwapchainKHR swapChain;
     VkFormat swapChainImageFormat;

@@ -2,7 +2,7 @@ project('VkEngine', 'cpp',
   version : '0.1',
   default_options : [
     'cpp_std=c++20',
-    'buildtype=debugoptimized',
+    'buildtype=debug',
     'warning_level=3'
   ]
 )

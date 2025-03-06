@@ -52,7 +52,9 @@ struct Queue {
     std::optional<uint32_t> index;
     VkQueue queue;
     static bool allQueuesAvailable(const std::vector<Queue>& queues) {
-        for (const auto& queue : queues) if (!queue.index.has_value()) return false;
+        for (const auto& queue : queues) {
+            if (!queue.index.has_value()) return false;
+        }
         return true;
     }
 };
