@@ -92,3 +92,37 @@ VkImageSubresourceRange vkinit::imageSubresourceRange(VkImageAspectFlags aspectM
     subImage.layerCount = VK_REMAINING_ARRAY_LAYERS;
     return subImage;
 }
+
+VkImageCreateInfo vkinit::imageCreateInfo(VkFormat format, VkImageUsageFlags usageFlags, VkExtent3D extent) {
+    VkImageCreateInfo info = {};
+    info.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+    info.pNext = nullptr;
+
+    info.imageType = VK_IMAGE_TYPE_2D;
+    info.format = format;
+    info.extent = extent;
+    info.mipLevels = 1;
+    info.arrayLayers = 1;
+    info.samples = VK_SAMPLE_COUNT_1_BIT; // for MSAA, defaults to 1 sample/px as not in use
+    info.tiling = VK_IMAGE_TILING_OPTIMAL; // means the image is stored with the best gpu format
+    info.usage = usageFlags;
+
+    return info;
+}
+
+VkImageViewCreateInfo vkinit::imageViewCreateInfo(VkFormat format, VkImage image, VkImageAspectFlags aspectFlags) {
+    VkImageViewCreateInfo info = {};
+    info.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+    info.pNext = nullptr;
+
+    info.viewType = VK_IMAGE_VIEW_TYPE_2D;
+    info.image = image;
+    info.format = format;
+    info.subresourceRange.baseMipLevel = 0;
+    info.subresourceRange.levelCount = 1;
+    info.subresourceRange.baseArrayLayer = 0;
+    info.subresourceRange.layerCount = 1;
+    info.subresourceRange.aspectMask = aspectFlags;
+
+    return info;
+}

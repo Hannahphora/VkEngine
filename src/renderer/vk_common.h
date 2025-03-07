@@ -7,7 +7,7 @@
 #include <vulkan/vk_enum_string_helper.h>
 #include <vma/vk_mem_alloc.h>
 
-#include <vkbootstrap/VkBootstrap.h>
+#include <vkb/VkBootstrap.h>
 
 #include <fmt/core.h>
 
@@ -35,10 +35,18 @@ const bool debug = false;
 #endif
 
 #define VK_CHECK(x)\
-do {\
-    VkResult err = x;\
-    if (err) {\
-        fmt::print("Detected Vulkan error: {}\n", string_VkResult(err));\
-        abort();\
-    }\
-} while (0)
+    do {\
+        VkResult err = x;\
+        if (err) {\
+            fmt::print("Detected Vulkan error: {}\n", string_VkResult(err));\
+            abort();\
+        }\
+    } while (0)
+
+struct AllocatedImage {
+    VkImage image;
+    VkImageView imageView;
+    VmaAllocation allocation;
+    VkExtent3D imageExtent;
+    VkFormat imageFormat;
+};

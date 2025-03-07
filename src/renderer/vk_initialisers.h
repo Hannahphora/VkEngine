@@ -17,4 +17,7 @@ namespace vkinit {
     VkPresentInfoKHR presentInfo();
 
     VkImageSubresourceRange imageSubresourceRange(VkImageAspectFlags aspectMask);
+
+    VkImageCreateInfo imageCreateInfo(VkFormat format, VkImageUsageFlags usageFlags, VkExtent3D extent);
+    VkImageViewCreateInfo imageViewCreateInfo(VkFormat format, VkImage image, VkImageAspectFlags aspectFlags);
 }

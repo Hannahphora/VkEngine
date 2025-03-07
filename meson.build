@@ -38,20 +38,13 @@ endforeach
 # get vulkan sdk path
 pymodule = import('python3')
 python3 = pymodule.find_python()
-res = run_command(python3, '-c', 'import os; print(os.environ["VULKAN_SDK"])')
-if res.returncode() == 0
-  vk_sdk = res.stdout().strip()
-else
-  # vk_sdk = 'C:/VulkanSDK/1.3.296.0/'
-  vk_sdk = 'C:/VulkanSDK/1.3.283.0/'
-endif
+vk_sdk = run_command(python3, '-c', 'import os; print(os.environ["VULKAN_SDK"])').stdout().strip()
 
 dxc = find_program(join_paths(vk_sdk, 'Bin/dxc.exe'), required: true)
 
 # shaders
 shaders_src = [
-  { 'name': 'vert', 'src': 'shaders/vert.hlsl', 'profile': 'vs_6_0' },
-  { 'name': 'frag', 'src': 'shaders/frag.hlsl', 'profile': 'ps_6_0' }
+  { 'name': 'gradient', 'src': 'shaders/gradient.comp.hlsl', 'profile': 'cs_6_0' },
 ]
 
 shaders = []
@@ -81,6 +74,8 @@ src = [
   'src/renderer/vk_renderer.cpp',
   'src/renderer/vk_initialisers.cpp',
   'src/renderer/vk_images.cpp',
+  'src/renderer/vk_descriptors.cpp',
+  'src/renderer/vk_pipelines.cpp',
   # imgui
   'dep/include/imgui/imgui.cpp',
   'dep/include/imgui/imgui_demo.cpp',
@@ -108,7 +103,7 @@ src = [
   'dep/include/meshoptimizer/vfetchanalyzer.cpp',
   'dep/include/meshoptimizer/vfetchoptimizer.cpp',
   # other
-  'dep/include/vkbootstrap/VkBootstrap.cpp',
+  'dep/include/vkb/VkBootstrap.cpp',
   shaders
 ]
 
