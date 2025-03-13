@@ -1,7 +1,7 @@
 #include "vk_images.h"
 #include "vk_initialisers.h"
 
-void vkutil::transitionImage(VkCommandBuffer cmd, VkImage img, VkImageLayout currentLayout, VkImageLayout newLayout) {
+void vkutil::transition_img(VkCommandBuffer cmd, VkImage img, VkImageLayout currentLayout, VkImageLayout newLayout) {
     VkImageMemoryBarrier2 imageBarrier = {};
     imageBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2;
     imageBarrier.pNext = nullptr;
@@ -15,7 +15,7 @@ void vkutil::transitionImage(VkCommandBuffer cmd, VkImage img, VkImageLayout cur
     imageBarrier.newLayout = newLayout;
 
     VkImageAspectFlags aspectMask = (newLayout == VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL) ? VK_IMAGE_ASPECT_DEPTH_BIT : VK_IMAGE_ASPECT_COLOR_BIT;
-    imageBarrier.subresourceRange = vkinit::imageSubresourceRange(aspectMask);
+    imageBarrier.subresourceRange = vkinit::img_subresource_range(aspectMask);
     imageBarrier.image = img;
 
     VkDependencyInfo depInfo = {};
@@ -27,7 +27,7 @@ void vkutil::transitionImage(VkCommandBuffer cmd, VkImage img, VkImageLayout cur
     vkCmdPipelineBarrier2(cmd, &depInfo);
 }
 
-void vkutil::copyImageToImage(VkCommandBuffer cmd, VkImage source, VkImage destination, VkExtent2D srcSize, VkExtent2D dstSize) {
+void vkutil::copy_img_to_img(VkCommandBuffer cmd, VkImage source, VkImage destination, VkExtent2D srcSize, VkExtent2D dstSize) {
     VkImageBlit2 blitRegion = {};
     blitRegion.sType = VK_STRUCTURE_TYPE_IMAGE_BLIT_2;
     blitRegion.pNext = nullptr;

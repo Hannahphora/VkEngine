@@ -3,26 +3,23 @@
 #include "vk_descriptors.h"
 
 struct DeletionQueue {
-	std::deque<std::function<void()>> deletors;
-
-	void push(std::function<void()>&& function) {
-		deletors.push_back(function);
-	}
-
+	void push(std::function<void()>&& function) { m_deletors.push_back(function); }
 	void flush() {
-		for (auto itr = deletors.rbegin(); itr != deletors.rend(); itr++) (*itr)();
-		deletors.clear();
+		for (auto itr = m_deletors.rbegin(); itr != m_deletors.rend(); itr++) (*itr)();
+		m_deletors.clear();
 	}
+private:
+	std::deque<std::function<void()>> m_deletors;
 };
 
 struct FrameData {
-	VkSemaphore swapchainSemaphore, renderSemaphore;
-	VkFence renderFence;
+	VkSemaphore _swapchainSemaphore, _renderSemaphore;
+	VkFence _renderFence;
 
-	VkCommandPool cmdPool;
-	VkCommandBuffer mainCmdBuffer;
+	VkCommandPool _cmdPool;
+	VkCommandBuffer _cmdBuf;
 
-	DeletionQueue deletionQueue;
+	DeletionQueue _deletionQueue;
 };
 
 const uint32_t FRAME_OVERLAP = 2;
@@ -30,73 +27,77 @@ const uint32_t FRAME_OVERLAP = 2;
 class Renderer {
 public:
 
-    bool isInitialised = false;
-	bool stopRendering = false;
-    uint64_t frameNumber = 0;
-	VkExtent2D windowExtent = {};
+    bool _isInitialised = false;
+	bool _stopRendering = false;
+	
+    GLFWwindow* _wnd;
+	VkExtent2D _wndExtent = {};
 
-    void init();
+    VkInstance _instance;
+	VkDebugUtilsMessengerEXT _dbgMsgr;
+    VkPhysicalDevice _physDev;
+	VkDevice _dev;
+	
+	uint64_t _frameNum = 0;
+	FrameData _frames[FRAME_OVERLAP];
+	FrameData& get_current_frame() { return _frames[_frameNum % FRAME_OVERLAP]; };
+
+	VmaAllocator _allocator;
+	DeletionQueue _primaryDeletionQueue;
+
+	VkQueue _graphicsQueue;
+	uint32_t _graphicsQueueFamily;
+	VkQueue _computeQueue;
+	uint32_t _computeQueueFamily;
+
+	VkSurfaceKHR _surface;
+    VkSwapchainKHR _swapchain;
+    VkFormat _swapchainImgFormat;
+	VkExtent2D _swapchainExtent;
+	VkExtent2D _drawExtent;
+
+	std::vector<VkImage> _swapchainImgs;
+	std::vector<VkImageView> _swapchainImgViews;
+
+	DescriptorAllocator _descriptorAllocator;
+
+	VkPipeline _gradientPipeline;
+	VkPipelineLayout _gradientPipelineLayout;
+
+	VkDescriptorSet _drawImgDescriptors;
+	VkDescriptorSetLayout _drawImgDescriptorLayout;
+
+	VkFence _imdFence;
+    VkCommandBuffer _imdCmdBuf;
+    VkCommandPool _imdCmdPool;
+
+	AllocatedImg _drawImg;
+
+	void init();
     void cleanup();
-	void draw();
+	
+	void render();
 
-	FrameData& getCurrentFrame() { return frames[frameNumber % FRAME_OVERLAP]; };
-	FrameData frames[FRAME_OVERLAP];
-
-    GLFWwindow* window;
-
-    VkInstance instance;
-	VkDebugUtilsMessengerEXT debugMessenger;
-    VkPhysicalDevice physicalDevice;
-	VkDevice device;
-	VkSurfaceKHR surface;
-
-	VmaAllocator allocator;
-	DeletionQueue mainDeletionQueue;
-
-	VkQueue graphicsQueue;
-	uint32_t graphicsQueueFamily;
-	VkQueue computeQueue;
-	uint32_t computeQueueFamily;
-
-    VkSwapchainKHR swapchain;
-    VkFormat swapchainImageFormat;
-	std::vector<VkImage> swapchainImages;
-	std::vector<VkImageView> swapchainImageViews;
-	VkExtent2D swapchainExtent;
-
-	AllocatedImage drawImage;
-	VkExtent2D drawExtent;
-
-	DescriptorAllocator globalDescriptorAllocator;
-	VkDescriptorSet drawImageDescriptors;
-	VkDescriptorSetLayout drawImageDescriptorLayout;
-
-	VkPipeline gradientPipeline;
-	VkPipelineLayout gradientPipelineLayout;
-
-	VkFence immediateFence;
-    VkCommandBuffer immediateCmdBuffer;
-    VkCommandPool immediateCmdPool;
-
-	void immediateSubmit(std::function<void(VkCommandBuffer cmd)>&& fn);
+	void imd_submit(std::function<void(VkCommandBuffer cmd)>&& fn);
 
 private:
-    void initVulkan();
-	void initCommands();
-	void initSyncStructures();
+	// init funcs
+    void init_vk();
+	void init_cmds();
+	void init_sync();
+	void init_descriptors();
+	void init_pipelines();
+	void init_swapchain();
+	void init_imgui();
 
-	void initDescriptors();
-	void initPipelines();
-	void initBgPipelines();
+	// other funcs
+	void create_swapchain();
+	void rebuild_swapchain();
+	void destroy_swapchain();
 
-	void initImgui();
-	void drawImgui(VkCommandBuffer cmd, VkImageView targetImageView);
+	// draw funcs
+	void draw();
+	void draw_imgui(VkCommandBuffer cmd, VkImageView targetImageView);
+	void draw_background(VkCommandBuffer cmd);
 
-	void initSwapchain();
-	void createSwapchain();
-	void destroySwapchain();
-	void rebuildSwapchain();
-
-	void drawFrame();
-	void drawBg(VkCommandBuffer cmd);
 };

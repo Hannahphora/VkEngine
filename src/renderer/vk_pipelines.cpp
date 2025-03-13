@@ -2,7 +2,7 @@
 #include "vk_initialisers.h"
 #include <fstream>
 
-bool vkutil::loadShaderModule(const char *filePath, VkDevice device, VkShaderModule *outShaderModule) {
+bool vkutil::load_shader_module(const char *filePath, VkDevice device, VkShaderModule *out) {
     
     std::ifstream file(filePath, std::ios::ate | std::ios::binary);
     if (!file.is_open()) return false;
@@ -22,6 +22,6 @@ bool vkutil::loadShaderModule(const char *filePath, VkDevice device, VkShaderMod
 
     VkShaderModule shaderModule;
     if (vkCreateShaderModule(device, &info, nullptr, &shaderModule) != VK_SUCCESS) return false;
-    *outShaderModule = shaderModule;
+    *out = shaderModule;
     return true;
 }

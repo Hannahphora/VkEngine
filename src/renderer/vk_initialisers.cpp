@@ -1,6 +1,6 @@
 #include "vk_initialisers.h"
 
-VkCommandPoolCreateInfo vkinit::commandPoolInfoCreate(uint32_t queueFamilyIndex, VkCommandPoolCreateFlags flags) {
+VkCommandPoolCreateInfo vkinit::cmd_pool_create_info(uint32_t queueFamilyIndex, VkCommandPoolCreateFlags flags) {
     VkCommandPoolCreateInfo info = {};
     info.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
     info.pNext = nullptr;
@@ -9,7 +9,7 @@ VkCommandPoolCreateInfo vkinit::commandPoolInfoCreate(uint32_t queueFamilyIndex,
     return info;
 }
 
-VkCommandBufferAllocateInfo vkinit::commandBufferAllocateInfo(VkCommandPool pool, uint32_t count) {
+VkCommandBufferAllocateInfo vkinit::cmd_buffer_alloc_info(VkCommandPool pool, uint32_t count) {
     VkCommandBufferAllocateInfo info = {};
     info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
     info.pNext = nullptr;
@@ -19,7 +19,7 @@ VkCommandBufferAllocateInfo vkinit::commandBufferAllocateInfo(VkCommandPool pool
     return info;
 }
 
-VkCommandBufferBeginInfo vkinit::commandBufferBeginInfo(VkCommandBufferUsageFlags flags) {
+VkCommandBufferBeginInfo vkinit::cmd_buffer_begin_info(VkCommandBufferUsageFlags flags) {
     VkCommandBufferBeginInfo info = {};
     info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
     info.pNext = nullptr;
@@ -27,7 +27,7 @@ VkCommandBufferBeginInfo vkinit::commandBufferBeginInfo(VkCommandBufferUsageFlag
     return info;
 }
 
-VkCommandBufferSubmitInfo vkinit::commandBufferSubmitInfo(VkCommandBuffer cmd) {
+VkCommandBufferSubmitInfo vkinit::cmd_buffer_submit_info(VkCommandBuffer cmd) {
     VkCommandBufferSubmitInfo info = {};
 	info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_SUBMIT_INFO;
     info.pNext = nullptr;
@@ -36,7 +36,7 @@ VkCommandBufferSubmitInfo vkinit::commandBufferSubmitInfo(VkCommandBuffer cmd) {
 	return info;
 }
 
-VkFenceCreateInfo vkinit::fenceCreateInfo(VkFenceCreateFlags flags) {
+VkFenceCreateInfo vkinit::fence_create_info(VkFenceCreateFlags flags) {
     VkFenceCreateInfo info = {};
     info.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
     info.pNext = nullptr;
@@ -44,7 +44,7 @@ VkFenceCreateInfo vkinit::fenceCreateInfo(VkFenceCreateFlags flags) {
     return info;
 }
 
-VkSemaphoreCreateInfo vkinit::semaphoreCreateInfo(VkSemaphoreCreateFlags flags) {
+VkSemaphoreCreateInfo vkinit::semaphore_create_info(VkSemaphoreCreateFlags flags) {
     VkSemaphoreCreateInfo info = {};
     info.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
     info.pNext = nullptr;
@@ -52,7 +52,7 @@ VkSemaphoreCreateInfo vkinit::semaphoreCreateInfo(VkSemaphoreCreateFlags flags) 
     return info;
 }
 
-VkSemaphoreSubmitInfo vkinit::semaphoreSubmitInfo(VkPipelineStageFlags2 stageMask, VkSemaphore semaphore) {
+VkSemaphoreSubmitInfo vkinit::semaphore_submit_info(VkPipelineStageFlags2 stageMask, VkSemaphore semaphore) {
     VkSemaphoreSubmitInfo info = {};
 	info.sType = VK_STRUCTURE_TYPE_SEMAPHORE_SUBMIT_INFO;
     info.pNext = nullptr;
@@ -63,7 +63,7 @@ VkSemaphoreSubmitInfo vkinit::semaphoreSubmitInfo(VkPipelineStageFlags2 stageMas
 	return info;
 }
 
-VkSubmitInfo2 vkinit::submitInfo(VkCommandBufferSubmitInfo *cmd, VkSemaphoreSubmitInfo *signalSemaphoreInfo, VkSemaphoreSubmitInfo *waitSemaphoreInfo) {
+VkSubmitInfo2 vkinit::submit_info(VkCommandBufferSubmitInfo *cmd, VkSemaphoreSubmitInfo *signalSemaphoreInfo, VkSemaphoreSubmitInfo *waitSemaphoreInfo) {
     VkSubmitInfo2 info = {};
     info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO_2;
     info.pNext = nullptr;
@@ -76,14 +76,14 @@ VkSubmitInfo2 vkinit::submitInfo(VkCommandBufferSubmitInfo *cmd, VkSemaphoreSubm
     return info;
 }
 
-VkPresentInfoKHR vkinit::presentInfo() {
+VkPresentInfoKHR vkinit::present_info() {
     VkPresentInfoKHR info = {};
     info.sType =  VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
     info.pNext = nullptr;
     return info;
 }
 
-VkImageSubresourceRange vkinit::imageSubresourceRange(VkImageAspectFlags aspectMask) {
+VkImageSubresourceRange vkinit::img_subresource_range(VkImageAspectFlags aspectMask) {
     VkImageSubresourceRange subImage = {};
     subImage.aspectMask = aspectMask;
     subImage.baseMipLevel = 0;
@@ -93,7 +93,7 @@ VkImageSubresourceRange vkinit::imageSubresourceRange(VkImageAspectFlags aspectM
     return subImage;
 }
 
-VkImageCreateInfo vkinit::imageCreateInfo(VkFormat format, VkImageUsageFlags usageFlags, VkExtent3D extent) {
+VkImageCreateInfo vkinit::img_create_info(VkFormat format, VkImageUsageFlags usageFlags, VkExtent3D extent) {
     VkImageCreateInfo info = {};
     info.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
     info.pNext = nullptr;
@@ -110,13 +110,13 @@ VkImageCreateInfo vkinit::imageCreateInfo(VkFormat format, VkImageUsageFlags usa
     return info;
 }
 
-VkImageViewCreateInfo vkinit::imageViewCreateInfo(VkFormat format, VkImage image, VkImageAspectFlags aspectFlags) {
+VkImageViewCreateInfo vkinit::imgview_create_info(VkFormat format, VkImage img, VkImageAspectFlags aspectFlags) {
     VkImageViewCreateInfo info = {};
     info.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
     info.pNext = nullptr;
 
     info.viewType = VK_IMAGE_VIEW_TYPE_2D;
-    info.image = image;
+    info.image = img;
     info.format = format;
     info.subresourceRange.baseMipLevel = 0;
     info.subresourceRange.levelCount = 1;
@@ -127,7 +127,7 @@ VkImageViewCreateInfo vkinit::imageViewCreateInfo(VkFormat format, VkImage image
     return info;
 }
 
-VkRenderingAttachmentInfo vkinit::attachmentInfo(VkImageView view, VkClearValue *clear, VkImageLayout layout) {
+VkRenderingAttachmentInfo vkinit::color_attachment_info(VkImageView view, VkClearValue *clear, VkImageLayout layout) {
     VkRenderingAttachmentInfo attachment = {};
     attachment.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
     attachment.pNext = nullptr;
@@ -141,7 +141,7 @@ VkRenderingAttachmentInfo vkinit::attachmentInfo(VkImageView view, VkClearValue 
     return attachment;
 }
 
-VkRenderingInfo vkinit::renderingInfo(VkExtent2D renderExtent, VkRenderingAttachmentInfo *colorAttachment, VkRenderingAttachmentInfo *depthAttachment) {
+VkRenderingInfo vkinit::rendering_info(VkExtent2D renderExtent, VkRenderingAttachmentInfo *colorAttachment, VkRenderingAttachmentInfo *depthAttachment) {
     VkRenderingInfo info = {};
     info.sType = VK_STRUCTURE_TYPE_RENDERING_INFO;
     info.pNext = nullptr;
@@ -154,4 +154,18 @@ VkRenderingInfo vkinit::renderingInfo(VkExtent2D renderExtent, VkRenderingAttach
     info.pStencilAttachment = nullptr;
     
     return info;
+}
+
+VkWriteDescriptorSet vkinit::write_descriptor_image(VkDescriptorType type, VkDescriptorSet dstSet, VkDescriptorImageInfo *imgInfo, uint32_t binding) {
+    VkWriteDescriptorSet write = {};
+    write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+    write.pNext = nullptr;
+
+    write.dstBinding = binding;
+    write.dstSet = dstSet;
+    write.descriptorCount = 1;
+    write.descriptorType = type;
+    write.pImageInfo = imgInfo;
+    
+    return write;
 }

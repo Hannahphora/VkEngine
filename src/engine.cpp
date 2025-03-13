@@ -10,7 +10,7 @@ void Engine::run() {
 
     initWindow(800, 600, "Window");
     
-    renderer = new Renderer{ .window = window };
+    renderer = new Renderer{ ._wnd = window };
     renderer->init();
 
 	registerInputActions(window);
@@ -20,12 +20,12 @@ void Engine::run() {
 		glfwPollEvents();
 		input->processActions();
 
-		if (renderer->stopRendering) {
+		if (renderer->_stopRendering) {
 			std::this_thread::sleep_for(std::chrono::milliseconds(100));
 			continue;
 		}			
 
-		renderer->draw();
+		renderer->render();
     }
 
     renderer->cleanup();

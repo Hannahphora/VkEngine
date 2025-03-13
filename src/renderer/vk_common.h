@@ -38,11 +38,12 @@
             abort();\
         }\
     } while (0)
+// VK_CHECK
 
-struct AllocatedImage {
-    VkImage image;
-    VkImageView imageView;
+struct AllocatedImg {
+    VkImage img;
+    VkImageView view;
     VmaAllocation allocation;
-    VkExtent3D imageExtent;
-    VkFormat imageFormat;
+    VkExtent3D extent;
+    VkFormat format;
 };

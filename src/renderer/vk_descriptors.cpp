@@ -5,23 +5,23 @@ void DescriptorLayoutBuilder::addBinding(uint32_t binding, VkDescriptorType type
     newbind.binding = binding;
     newbind.descriptorCount = 1;
     newbind.descriptorType = type;
-    bindings.push_back(newbind);
+    m_bindings.push_back(newbind);
 }
 
 void DescriptorLayoutBuilder::clear() {
-    bindings.clear();
+    m_bindings.clear();
 }
 
 VkDescriptorSetLayout DescriptorLayoutBuilder::build(VkDevice device, VkShaderStageFlags shaderStages, void* pNext,
     VkDescriptorSetLayoutCreateFlags flags) {
     
-    for (auto& b : bindings) b.stageFlags |= shaderStages;
+    for (auto& b : m_bindings) b.stageFlags |= shaderStages;
 
     VkDescriptorSetLayoutCreateInfo info = {};
     info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
     info.pNext = pNext;
-    info.pBindings = bindings.data();
-    info.bindingCount = (uint32_t)bindings.size();
+    info.pBindings = m_bindings.data();
+    info.bindingCount = (uint32_t)m_bindings.size();
     info.flags = flags;
 
     VkDescriptorSetLayout set;

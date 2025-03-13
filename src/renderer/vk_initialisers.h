@@ -2,27 +2,30 @@
 #include "vk_common.h"
 
 namespace vkinit {
-    VkCommandPoolCreateInfo commandPoolInfoCreate(uint32_t queueFamilyIndex, VkCommandPoolCreateFlags flags = 0);
-    VkCommandBufferAllocateInfo commandBufferAllocateInfo(VkCommandPool pool, uint32_t count = 1);
+    VkCommandPoolCreateInfo cmd_pool_create_info(uint32_t queueFamilyIndex, VkCommandPoolCreateFlags flags = 0);
+    VkCommandBufferAllocateInfo cmd_buffer_alloc_info(VkCommandPool pool, uint32_t count = 1);
 
-    VkCommandBufferBeginInfo commandBufferBeginInfo(VkCommandBufferUsageFlags flags = 0);
-    VkCommandBufferSubmitInfo commandBufferSubmitInfo(VkCommandBuffer cmd);
+    VkCommandBufferBeginInfo cmd_buffer_begin_info(VkCommandBufferUsageFlags flags = 0);
+    VkCommandBufferSubmitInfo cmd_buffer_submit_info(VkCommandBuffer cmd);
 
-    VkFenceCreateInfo fenceCreateInfo(VkFenceCreateFlags flags = 0);
+    VkFenceCreateInfo fence_create_info(VkFenceCreateFlags flags = 0);
 
-    VkSemaphoreCreateInfo semaphoreCreateInfo(VkSemaphoreCreateFlags flags = 0);
-    VkSemaphoreSubmitInfo semaphoreSubmitInfo(VkPipelineStageFlags2 stageMask, VkSemaphore semaphore);
+    VkSemaphoreCreateInfo semaphore_create_info(VkSemaphoreCreateFlags flags = 0);
+    VkSemaphoreSubmitInfo semaphore_submit_info(VkPipelineStageFlags2 stageMask, VkSemaphore semaphore);
 
-    VkSubmitInfo2 submitInfo(VkCommandBufferSubmitInfo* cmd, VkSemaphoreSubmitInfo* signalSemaphoreInfo, VkSemaphoreSubmitInfo* waitSemaphoreInfo);
-    VkPresentInfoKHR presentInfo();
+    VkSubmitInfo2 submit_info(VkCommandBufferSubmitInfo* cmd, VkSemaphoreSubmitInfo* signalSemaphoreInfo, VkSemaphoreSubmitInfo* waitSemaphoreInfo);
+    VkPresentInfoKHR present_info();
 
-    VkImageSubresourceRange imageSubresourceRange(VkImageAspectFlags aspectMask);
+    VkRenderingAttachmentInfo color_attachment_info(VkImageView view, VkClearValue* clear ,VkImageLayout layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
 
-    VkImageCreateInfo imageCreateInfo(VkFormat format, VkImageUsageFlags usageFlags, VkExtent3D extent);
-    VkImageViewCreateInfo imageViewCreateInfo(VkFormat format, VkImage image, VkImageAspectFlags aspectFlags);
+    VkRenderingAttachmentInfo depth_attachment_info(VkImageView view, VkImageLayout layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
 
-    VkRenderingAttachmentInfo attachmentInfo(VkImageView view, VkClearValue* clear ,VkImageLayout layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+    VkRenderingInfo rendering_info(VkExtent2D renderExtent, VkRenderingAttachmentInfo* colorAttachment, VkRenderingAttachmentInfo* depthAttachment);
 
-    VkRenderingInfo renderingInfo(VkExtent2D renderExtent, VkRenderingAttachmentInfo* colorAttachment, VkRenderingAttachmentInfo* depthAttachment);
-    
-}
+    VkWriteDescriptorSet write_descriptor_image(VkDescriptorType type, VkDescriptorSet dstSet, VkDescriptorImageInfo* imgInfo, uint32_t binding);
+
+    VkImageSubresourceRange img_subresource_range(VkImageAspectFlags aspectMask);
+
+    VkImageCreateInfo img_create_info(VkFormat format, VkImageUsageFlags usageFlags, VkExtent3D extent);
+    VkImageViewCreateInfo imgview_create_info(VkFormat format, VkImage img, VkImageAspectFlags aspectFlags);
+} // namespace vkutil
