@@ -5,13 +5,15 @@
 #include "vk_pipelines.h"
 
 #define VMA_IMPLEMENTATION
-#include "vma/vk_mem_alloc.h"
+#include <vma/vk_mem_alloc.h>
+
+#include <imgui.h>
+#include <imgui_impl_glfw.h>
+#include <imgui_impl_vulkan.h>
 
 void Renderer::init() {
 
-    int w{}, h{};
-    glfwGetWindowSize(window, &w, &h);
-    windowExtent = { (uint32_t)w, (uint32_t)h };
+    glfwGetWindowSize(window, (int*)&windowExtent.width, (int*)&windowExtent.height);
     
     initVulkan();
     initSwapchain();
@@ -48,13 +50,30 @@ void Renderer::cleanup() {
 }
 
 void Renderer::draw() {
-    // wait for gpu to finish rendering last frame
+    
+    ImGui_ImplVulkan_NewFrame();
+    ImGui_ImplGlfw_NewFrame();
+    ImGui::NewFrame();
+
+    ImGui::ShowDemoWindow();
+    ImGui::Render();
+
+    drawFrame();
+}
+
+void Renderer::drawFrame() {
+    
+    // wait for gpu to finish rendering last frame, 1sec timeout
     VK_CHECK(vkWaitForFences(device, 1, &getCurrentFrame().renderFence, true, 1000000000));
     getCurrentFrame().deletionQueue.flush();
 
     // request img from swapchain
     uint32_t swapchainImageIndex;
-	VK_CHECK(vkAcquireNextImageKHR(device, swapchain, 1000000000, getCurrentFrame().swapchainSemaphore, nullptr, &swapchainImageIndex));
+	if(vkAcquireNextImageKHR(device, swapchain, 1000000000, getCurrentFrame().swapchainSemaphore,
+        nullptr, &swapchainImageIndex) == VK_ERROR_OUT_OF_DATE_KHR) {
+		rebuildSwapchain();
+		return;
+	}
 
     // reset fence and cmd buffer
     VK_CHECK(vkResetFences(device, 1, &getCurrentFrame().renderFence));
@@ -70,17 +89,23 @@ void Renderer::draw() {
 	drawExtent.height = drawImage.imageExtent.height;
     vkutil::transitionImage(cmd, drawImage.image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_GENERAL);
 
-    drawBg(cmd); // records drawing cmds
+    drawBg(cmd);
 
     // transition draw and swapchain imgs to transfer layouts
 	vkutil::transitionImage(cmd, drawImage.image, VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
 	vkutil::transitionImage(cmd, swapchainImages[swapchainImageIndex], VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 
-	// copy from draw img to swapchain
+    // execute copy from draw img into swapchain
 	vkutil::copyImageToImage(cmd, drawImage.image, swapchainImages[swapchainImageIndex], drawExtent, swapchainExtent);
 
+    // set swapchain img layout to attachment optimal
+	vkutil::transitionImage(cmd, swapchainImages[swapchainImageIndex], VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+
+    // draw imgui to swapchain img
+	drawImgui(cmd, swapchainImageViews[swapchainImageIndex]);
+
 	// set swapchain image layout to present
-	vkutil::transitionImage(cmd, swapchainImages[swapchainImageIndex], VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
+	vkutil::transitionImage(cmd, swapchainImages[swapchainImageIndex], VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
 
 	// finish recordings commands
 	VK_CHECK(vkEndCommandBuffer(cmd));
@@ -105,7 +130,6 @@ void Renderer::draw() {
 }
 
 void Renderer::drawBg(VkCommandBuffer cmd) {
-
     vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_COMPUTE, gradientPipeline);
 
     vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_COMPUTE, gradientPipelineLayout, 0, 1, &drawImageDescriptors, 0, nullptr);
@@ -118,7 +142,7 @@ void Renderer::initVulkan() {
     vkb::InstanceBuilder instanceBuilder;
 	auto vkbInstance = instanceBuilder
         .set_app_name("VkEngine")
-		.request_validation_layers(useValidationLayers)
+		.request_validation_layers(VULKAN_DEBUG_REPORT)
 		.use_default_debug_messenger()
 		.require_api_version(1, 3, 0)
 		.build();
@@ -185,13 +209,12 @@ void Renderer::initVulkan() {
 void Renderer::initSwapchain() {
     createSwapchain();
 
-    // setup draw img
     VkExtent3D drawImageExtent = { windowExtent.width, windowExtent.height, 1 };
 
-    drawImage.imageFormat = VK_FORMAT_R16G16B16A16_SFLOAT;
+    drawImage.imageFormat = VK_FORMAT_R16G16B16A16_SFLOAT; // hardcode 32 bit float format
     drawImage.imageExtent = drawImageExtent;
 
-    VkImageUsageFlags drawImageUsages{};
+    VkImageUsageFlags drawImageUsages = {};
 	drawImageUsages |= VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
 	drawImageUsages |= VK_IMAGE_USAGE_TRANSFER_DST_BIT;
 	drawImageUsages |= VK_IMAGE_USAGE_STORAGE_BIT;
@@ -242,6 +265,69 @@ void Renderer::destroySwapchain() {
     }
 }
 
+void Renderer::rebuildSwapchain() {
+    vkQueueWaitIdle(graphicsQueue);
+
+    glfwGetWindowSize(window, (int*)&windowExtent.width, (int*)&windowExtent.height);
+
+	vkDestroySwapchainKHR(device, swapchain, nullptr);
+	vkDestroyImageView(device, drawImage.imageView, nullptr);
+	vmaDestroyImage(allocator, drawImage.image, drawImage.allocation);
+
+	vkb::SwapchainBuilder swapchainBuilder(physicalDevice, device, surface);
+	auto vkbSwapchain = swapchainBuilder
+		.set_desired_format(VkSurfaceFormatKHR{ .format = swapchainImageFormat, .colorSpace = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR })
+		.set_desired_present_mode(VK_PRESENT_MODE_MAILBOX_KHR)
+        .set_desired_extent(windowExtent.width, windowExtent.height)
+		.add_image_usage_flags(VK_IMAGE_USAGE_TRANSFER_DST_BIT)
+		.build();
+    if (!vkbSwapchain) {
+        fmt::print("error creating swapchain: {}\n", vkbSwapchain.error().message());
+        abort();
+    }
+
+	swapchain = vkbSwapchain.value().swapchain;
+	swapchainImages = vkbSwapchain.value().get_images().value();
+	swapchainImageViews = vkbSwapchain.value().get_image_views().value();
+	swapchainImageFormat = vkbSwapchain.value().image_format;
+
+	VkExtent3D drawImageExtent = { windowExtent.width, windowExtent.height, 1 };
+
+	drawImage.imageFormat = VK_FORMAT_R16G16B16A16_SFLOAT; // hardcode 32 bit float format
+
+	VkImageUsageFlags drawImageUsages = {};
+	drawImageUsages |= VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
+	drawImageUsages |= VK_IMAGE_USAGE_TRANSFER_DST_BIT;
+	drawImageUsages |= VK_IMAGE_USAGE_STORAGE_BIT;
+
+	auto rimg_info = vkinit::imageCreateInfo(drawImage.imageFormat, drawImageUsages, drawImageExtent);
+
+	// alloc draw img from gpu local heap
+	VmaAllocationCreateInfo rimg_allocinfo = {};
+	rimg_allocinfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
+	rimg_allocinfo.requiredFlags = VkMemoryPropertyFlags(VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+
+	// create img
+	vmaCreateImage(allocator, &rimg_info, &rimg_allocinfo, &drawImage.image, &drawImage.allocation, nullptr);
+
+    // create draw img view
+	VkImageViewCreateInfo rview_info = vkinit::imageViewCreateInfo(drawImage.imageFormat, drawImage.image, VK_IMAGE_ASPECT_COLOR_BIT);
+
+	VK_CHECK(vkCreateImageView(device, &rview_info, nullptr, &drawImage.imageView));
+
+	VkDescriptorImageInfo imgInfo = {};
+	imgInfo.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
+	imgInfo.imageView = drawImage.imageView;
+
+	// VkWriteDescriptorSet cameraWrite = vkinit::write_descriptor_image(VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, _drawImageDescriptors, &imgInfo, 0);
+	// vkUpdateDescriptorSets(device, 1, &cameraWrite, 0, nullptr);
+
+	mainDeletionQueue.push([&]() {
+		vkDestroyImageView(device, drawImage.imageView, nullptr);
+		vmaDestroyImage(allocator, drawImage.image, drawImage.allocation);
+	});
+}
+
 void Renderer::initCommands() {
 
     auto cmdPoolInfo = vkinit::commandPoolInfoCreate(graphicsQueueFamily, VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
@@ -251,12 +337,12 @@ void Renderer::initCommands() {
         VK_CHECK(vkAllocateCommandBuffers(device, &cmdAllocInfo, &frames[i].mainCmdBuffer));
 	}
 
-    VK_CHECK(vkCreateCommandPool(device, &cmdPoolInfo, nullptr, &imdCmdPool));
-	auto cmdAllocInfo = vkinit::commandBufferAllocateInfo(imdCmdPool, 1);
-	VK_CHECK(vkAllocateCommandBuffers(device, &cmdAllocInfo, &imdCmdBuffer));
+    VK_CHECK(vkCreateCommandPool(device, &cmdPoolInfo, nullptr, &immediateCmdPool));
+	auto cmdAllocInfo = vkinit::commandBufferAllocateInfo(immediateCmdPool, 1);
+	VK_CHECK(vkAllocateCommandBuffers(device, &cmdAllocInfo, &immediateCmdBuffer));
 
 	mainDeletionQueue.push([=]() { 
-	    vkDestroyCommandPool(device, imdCmdPool, nullptr);
+	    vkDestroyCommandPool(device, immediateCmdPool, nullptr);
 	});
 }
 
@@ -271,9 +357,9 @@ void Renderer::initSyncStructures() {
 		VK_CHECK(vkCreateSemaphore(device, &semaphoreCreateInfo, nullptr, &frames[i].renderSemaphore));
 	}
 
-    VK_CHECK(vkCreateFence(device, &fenceCreateInfo, nullptr, &imdFence));
+    VK_CHECK(vkCreateFence(device, &fenceCreateInfo, nullptr, &immediateFence));
 	mainDeletionQueue.push([=]() {
-        vkDestroyFence(device, imdFence, nullptr);
+        vkDestroyFence(device, immediateFence, nullptr);
     });
 }
 
@@ -358,8 +444,91 @@ void Renderer::initBgPipelines() {
 
 void Renderer::initImgui() {
 
+    // create descriptor pools for imgui
+    VkDescriptorPoolSize pool_sizes[] = {
+        { VK_DESCRIPTOR_TYPE_SAMPLER, 1000 },
+		{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1000 },
+		{ VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 1000 },
+		{ VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1000 },
+		{ VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER, 1000 },
+		{ VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER, 1000 },
+		{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1000 },
+		{ VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1000 },
+		{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1000 },
+		{ VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC, 1000 },
+		{ VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 1000 }
+    };
+
+    VkDescriptorPoolCreateInfo poolInfo = {};
+	poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+    poolInfo.pNext = nullptr;
+	poolInfo.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
+	poolInfo.maxSets = 1000;
+	poolInfo.poolSizeCount = (uint32_t)std::size(pool_sizes);
+	poolInfo.pPoolSizes = pool_sizes;
+
+    VkDescriptorPool imguiPool;
+	VK_CHECK(vkCreateDescriptorPool(device, &poolInfo, nullptr, &imguiPool));
+
+    // init imgui for glfw/vulkan
+    ImGui::CreateContext();
+    ImGui_ImplGlfw_InitForVulkan(window, true);
+
+    ImGui_ImplVulkan_InitInfo initInfo = {};
+	initInfo.Instance = instance;
+	initInfo.PhysicalDevice = physicalDevice;
+	initInfo.Device = device;
+    initInfo.QueueFamily = graphicsQueueFamily;
+	initInfo.Queue = graphicsQueue;
+	initInfo.DescriptorPool = imguiPool;
+	initInfo.MinImageCount = 3;
+	initInfo.ImageCount = 3;
+	initInfo.UseDynamicRendering = true;
+
+    VkPipelineRenderingCreateInfoKHR pipelineRenderingInfo = {};
+    pipelineRenderingInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO;
+    pipelineRenderingInfo.pNext = nullptr;
+    pipelineRenderingInfo.colorAttachmentCount = 1;
+    pipelineRenderingInfo.pColorAttachmentFormats = &swapchainImageFormat;
+
+    initInfo.PipelineRenderingCreateInfo = pipelineRenderingInfo;
+    initInfo.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
+
+    ImGui_ImplVulkan_Init(&initInfo);
+    ImGui_ImplVulkan_CreateFontsTexture();
+
+    mainDeletionQueue.push([=]() {
+		ImGui_ImplVulkan_Shutdown();
+		vkDestroyDescriptorPool(device, imguiPool, nullptr);
+	});
 }
 
-void Renderer::imdSubmit(std::function<void(VkCommandBuffer cmd)>&& fn) {
-    
+void Renderer::immediateSubmit(std::function<void(VkCommandBuffer cmd)>&& fn) {
+    VK_CHECK(vkResetFences(device, 1, &immediateFence));
+	VK_CHECK(vkResetCommandBuffer(immediateCmdBuffer, 0));
+
+	VkCommandBuffer cmd = immediateCmdBuffer;
+
+	auto cmdBeginInfo = vkinit::commandBufferBeginInfo(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
+
+	VK_CHECK(vkBeginCommandBuffer(cmd, &cmdBeginInfo));
+
+	fn(cmd);
+
+	VK_CHECK(vkEndCommandBuffer(cmd));
+
+	VkCommandBufferSubmitInfo cmdinfo = vkinit::commandBufferSubmitInfo(cmd);
+	VkSubmitInfo2 submit = vkinit::submitInfo(&cmdinfo, nullptr, nullptr);
+
+	VK_CHECK(vkQueueSubmit2(graphicsQueue, 1, &submit, immediateFence));
+	VK_CHECK(vkWaitForFences(device, 1, &immediateFence, true, 9999999999));
+}
+
+void Renderer::drawImgui(VkCommandBuffer cmd, VkImageView targetImageView) {
+    auto colorAttachment = vkinit::attachmentInfo(targetImageView, nullptr, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+	VkRenderingInfo renderInfo = vkinit::renderingInfo(swapchainExtent, &colorAttachment, nullptr);
+
+	vkCmdBeginRendering(cmd, &renderInfo);
+	ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), cmd);
+	vkCmdEndRendering(cmd);
 }

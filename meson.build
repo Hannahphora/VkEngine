@@ -10,13 +10,15 @@ project('VkEngine', 'cpp',
 cpp = meson.get_compiler('cpp')
 
 if get_option('buildtype') == 'debug' or get_option('buildtype') == 'debugoptimized'
-  add_project_arguments('-DDEBUG', language : 'cpp')
+  add_project_arguments('-D_DEBUG', language : 'cpp')
+else
+  add_project_arguments('-DNDEBUG', language : 'cpp')
 endif
 
 inc = include_directories(
   'dep/include/',
   'dep/include/imgui/',
-  'dep/include/imgui/backends/'
+  'dep/include/imgui/backends/',
 )
 
 # get deps
@@ -71,6 +73,7 @@ src = [
   # src
   'src/main.cpp',
   'src/engine.cpp',
+  'src/input.cpp',
   'src/renderer/vk_renderer.cpp',
   'src/renderer/vk_initialisers.cpp',
   'src/renderer/vk_images.cpp',

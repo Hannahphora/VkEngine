@@ -26,13 +26,9 @@
 #include <limits>
 #include <algorithm>
 
-#ifdef DEBUG
-const bool useValidationLayers = true;
-const bool debug = true;
-#else
-const bool useValidationLayers = false;
-const bool debug = false;
-#endif
+#ifdef _DEBUG
+#define VULKAN_DEBUG_REPORT
+#endif // _DEBUG
 
 #define VK_CHECK(x)\
     do {\

@@ -31,14 +31,13 @@ class Renderer {
 public:
 
     bool isInitialised = false;
+	bool stopRendering = false;
     uint64_t frameNumber = 0;
 	VkExtent2D windowExtent = {};
 
     void init();
     void cleanup();
-
-    void draw();
-	void drawBg(VkCommandBuffer cmd);
+	void draw();
 
 	FrameData& getCurrentFrame() { return frames[frameNumber % FRAME_OVERLAP]; };
 	FrameData frames[FRAME_OVERLAP];
@@ -75,11 +74,11 @@ public:
 	VkPipeline gradientPipeline;
 	VkPipelineLayout gradientPipelineLayout;
 
-	VkFence imdFence;
-    VkCommandBuffer imdCmdBuffer;
-    VkCommandPool imdCmdPool;
+	VkFence immediateFence;
+    VkCommandBuffer immediateCmdBuffer;
+    VkCommandPool immediateCmdPool;
 
-	void imdSubmit(std::function<void(VkCommandBuffer cmd)>&& fn);
+	void immediateSubmit(std::function<void(VkCommandBuffer cmd)>&& fn);
 
 private:
     void initVulkan();
@@ -91,8 +90,13 @@ private:
 	void initBgPipelines();
 
 	void initImgui();
+	void drawImgui(VkCommandBuffer cmd, VkImageView targetImageView);
 
 	void initSwapchain();
 	void createSwapchain();
 	void destroySwapchain();
+	void rebuildSwapchain();
+
+	void drawFrame();
+	void drawBg(VkCommandBuffer cmd);
 };

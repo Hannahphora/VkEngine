@@ -126,3 +126,32 @@ VkImageViewCreateInfo vkinit::imageViewCreateInfo(VkFormat format, VkImage image
 
     return info;
 }
+
+VkRenderingAttachmentInfo vkinit::attachmentInfo(VkImageView view, VkClearValue *clear, VkImageLayout layout) {
+    VkRenderingAttachmentInfo attachment = {};
+    attachment.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
+    attachment.pNext = nullptr;
+    
+    attachment.imageView = view;
+    attachment.imageLayout = layout;
+    attachment.loadOp = clear ? VK_ATTACHMENT_LOAD_OP_CLEAR : VK_ATTACHMENT_LOAD_OP_LOAD;
+    attachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+    if (clear) attachment.clearValue = *clear;
+
+    return attachment;
+}
+
+VkRenderingInfo vkinit::renderingInfo(VkExtent2D renderExtent, VkRenderingAttachmentInfo *colorAttachment, VkRenderingAttachmentInfo *depthAttachment) {
+    VkRenderingInfo info = {};
+    info.sType = VK_STRUCTURE_TYPE_RENDERING_INFO;
+    info.pNext = nullptr;
+
+    info.renderArea = VkRect2D { VkOffset2D { 0, 0 }, renderExtent };
+    info.layerCount = 1;
+    info.colorAttachmentCount = 1;
+    info.pColorAttachments = colorAttachment;
+    info.pDepthAttachment = depthAttachment;
+    info.pStencilAttachment = nullptr;
+    
+    return info;
+}

@@ -1,37 +1,69 @@
 #include "engine.h"
+#include <thread>
+#include <chrono>
+
+#include <imgui.h>
+#include <imgui_impl_glfw.h>
+#include <imgui_impl_vulkan.h>
 
 void Engine::run() {
 
     initWindow(800, 600, "Window");
     
-    Renderer renderer = { .window = window };
-    renderer.init();
+    renderer = new Renderer{ .window = window };
+    renderer->init();
+
+	registerInputActions(window);
 
     while (!glfwWindowShouldClose(window)) {
+		// poll/process events
+		glfwPollEvents();
+		input->processActions();
 
-		renderer.draw();
+		if (renderer->stopRendering) {
+			std::this_thread::sleep_for(std::chrono::milliseconds(100));
+			continue;
+		}			
 
-        glfwPollEvents();
+		renderer->draw();
     }
 
-    renderer.cleanup();
+    renderer->cleanup();
+	delete renderer;
+	delete input;
+	glfwTerminate();
 }
 
 void Engine::initWindow(int width, int height, const char* title) {
 
+	glfwSetErrorCallback(glfw_error_callback);
 	if (!glfwInit()) {
 		fmt::print("error: failed to init glfw\n");
-		abort();
+		exit(EXIT_FAILURE);
 	}
 
 	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-	glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
 
+	monitor = glfwGetPrimaryMonitor();
 	window = glfwCreateWindow(width, height, title, nullptr, nullptr);
 	if (!window) {
-		fmt::print("error: failed to create window\n");
+		fmt::print(stderr, "error: failed to create window\n");
 		glfwTerminate();
-		abort();
+		exit(EXIT_FAILURE);
 	}
+	if (!glfwVulkanSupported()) {
+        fmt::print(stderr, "error: glfw does not support vulkan\n");
+        exit(EXIT_FAILURE);
+    }
+
+	glfwSetWindowUserPointer(window, this);
+	input = new InputManager(window);
+}
+
+void Engine::registerInputActions(GLFWwindow* window) {
+	// quit
+	input->registerAction("Quit", Binding::key(GLFW_KEY_ESCAPE, GLFW_PRESS), [window]() {
+		glfwSetWindowShouldClose(window, true);
+	});
 
 }
